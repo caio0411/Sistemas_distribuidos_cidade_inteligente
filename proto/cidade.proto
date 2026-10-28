@@ -1,0 +1,190 @@
+// Mensagens do sistema "Cidade Inteligente".
+// Usadas em todas as comunicações: multicast (descoberta), UDP (leituras),
+// TCP (Cliente <-> Gateway) e como tipos do serviço gRPC (controle.proto).
+syntax = "proto3";
+
+package cidade;
+
+// ---------------------------------------------------------------------------
+// Tipos básicos
+// ---------------------------------------------------------------------------
+
+enum TipoFonte {
+  TIPO_DESCONHECIDO = 0;
+  POSTE_ILUMINACAO = 1;   // controlável (ligar/desligar, intensidade)
+  SENSOR_AR = 2;          // controlável (limiar de alerta, frequência) + envia eventos
+  ESTACAO_METEOROLOGICA = 3; // não controlável (temperatura, umidade)
+  SEMAFORO = 4;           // controlável (tempo de ciclo, ligar/desligar)
+  CONTADOR_TRAFEGO = 5;   // não controlável (veículos por minuto)
+  SENSOR_RUIDO = 6;       // não controlável + envia eventos (dB)
+}
+
+enum StatusFonte {
+  STATUS_DESCONHECIDO = 0;
+  ONLINE = 1;
+  DESLIGADA = 2;  // respondendo, mas desligada por comando
+  FALHA = 3;      // falha simulada por comando
+  OFFLINE = 4;    // não responde / parou de enviar dados
+}
+
+// Estado operacional de uma fonte (parâmetros configuráveis).
+message EstadoFonte {
+  bool ligado = 1;
+  int32 intervalo_envio_s = 2;
+  double limiar_alerta = 3; // usado pelo sensor de ar (ppm de CO2)
+  int32 intensidade = 4;    // usado pelo poste (0-100 %)
+  bool em_falha = 5;
+  int32 tempo_ciclo_s = 6;  // usado pelo semáforo (duração do ciclo verde+vermelho)
+}
+
+// Uma grandeza medida (ex.: temperatura = 25.3 °C).
+message Medida {
+  string grandeza = 1;
+  double valor = 2;
+  string unidade = 3;
+}
+
+// ---------------------------------------------------------------------------
+// Descoberta (UDP multicast)
+// ---------------------------------------------------------------------------
+
+// Gateway -> grupo multicast: "fontes, identifiquem-se".
+message RequisicaoDescoberta {
+  string gateway_ip = 1;
+  int32 porta_descoberta = 2; // onde o Gateway espera os anúncios
+  int32 porta_dados_udp = 3;  // para onde as fontes devem enviar leituras
+}
+
+// Fonte -> Gateway (unicast UDP): resposta à descoberta.
+message AnuncioFonte {
+  string id = 1;
+  TipoFonte tipo = 2;
+  string ip = 3;
+  int32 porta_grpc = 4;      // 0 se a fonte não for controlável
+  bool controlavel = 5;
+  int32 intervalo_envio_s = 6;
+  EstadoFonte estado_inicial = 7;
+}
+
+// ---------------------------------------------------------------------------
+// Fluxo de dados (UDP)
+// ---------------------------------------------------------------------------
+
+message Leitura {
+  string fonte_id = 1;
+  TipoFonte tipo = 2;
+  int64 timestamp_ms = 3;
+  repeated Medida medidas = 4;
+  bool evento = 5; // true = envio imediato por ultrapassagem de limiar
+}
+
+// ---------------------------------------------------------------------------
+// Cliente <-> Gateway (TCP)
+// ---------------------------------------------------------------------------
+
+enum AcaoComando {
+  ACAO_DESCONHECIDA = 0;
+  LIGAR = 1;
+  DESLIGAR = 2;
+  DEFINIR_INTERVALO = 3;   // valor = segundos
+  DEFINIR_LIMIAR = 4;      // valor = ppm
+  DEFINIR_INTENSIDADE = 5; // valor = 0-100
+  SIMULAR_FALHA = 6;
+  RECUPERAR_FALHA = 7;
+  DEFINIR_TEMPO_CICLO = 8; // valor = segundos (semáforo)
+}
+
+enum TipoConsulta {
+  CONSULTA_DESCONHECIDA = 0;
+  MEDIA = 1;            // média de uma grandeza na janela
+  DESVIO_PADRAO = 2;    // desvio padrão de uma grandeza na janela
+  MAIOR_VARIACAO = 3;   // fonte com maior variação (máx - mín) de uma grandeza
+  CONTAGEM_ALERTAS = 4; // quantidade de eventos (alertas) por fonte
+  PICO = 5;             // maior valor de uma grandeza e qual fonte o registrou
+}
+
+message ListarFontes {}
+
+message ComandoFonte {
+  string fonte_id = 1;
+  AcaoComando acao = 2;
+  double valor = 3;
+}
+
+message ConsultaAgregada {
+  TipoConsulta tipo = 1;
+  string grandeza = 2;      // ex.: "temperatura", "co2", "consumo", "ruido"
+  int32 janela_minutos = 3; // ex.: 60 = última hora
+}
+
+message ConsultaHistorico {
+  string fonte_id = 1;      // vazio = todas as fontes
+  string grandeza = 2;
+  int32 janela_minutos = 3;
+  int32 limite = 4;
+}
+
+message RequisicaoCliente {
+  oneof tipo {
+    ListarFontes listar = 1;
+    ComandoFonte comando = 2;
+    ConsultaAgregada consulta = 3;
+    ConsultaHistorico historico = 4;
+  }
+}
+
+message InfoFonte {
+  string id = 1;
+  TipoFonte tipo = 2;
+  string ip = 3;
+  int32 porta_grpc = 4;
+  bool controlavel = 5;
+  StatusFonte status = 6;
+  EstadoFonte estado = 7;
+  int64 ultima_leitura_ms = 8;
+  repeated Medida ultimas_medidas = 9;
+}
+
+message ListaFontes {
+  repeated InfoFonte fontes = 1;
+}
+
+message ResultadoComando {
+  bool sucesso = 1;
+  string mensagem = 2;
+  EstadoFonte estado = 3;
+}
+
+message ItemResultado {
+  string rotulo = 1; // ex.: id da fonte ou "geral"
+  double valor = 2;
+  int32 amostras = 3;
+}
+
+message ResultadoConsulta {
+  string descricao = 1;
+  string unidade = 2;
+  repeated ItemResultado itens = 3;
+}
+
+message PontoHistorico {
+  string fonte_id = 1;
+  string grandeza = 2;
+  double valor = 3;
+  int64 timestamp_ms = 4;
+  bool evento = 5;
+}
+
+message ResultadoHistorico {
+  repeated PontoHistorico pontos = 1;
+}
+
+message RespostaCliente {
+  oneof tipo {
+    ListaFontes lista = 1;
+    ResultadoComando comando = 2;
+    ResultadoConsulta consulta = 3;
+    ResultadoHistorico historico = 4;
+    string erro = 5;
+  }
+}

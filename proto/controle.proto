@@ -1,0 +1,51 @@
+// Serviço gRPC exposto pelas fontes controláveis (poste e sensor de ar).
+// O Gateway é o cliente gRPC; cada fonte controlável é um servidor gRPC.
+syntax = "proto3";
+
+package cidade;
+
+import "cidade.proto";
+
+message Vazio {}
+
+message ValorBool {
+  bool valor = 1;
+}
+
+message ValorInt {
+  int32 valor = 1;
+}
+
+message ValorDouble {
+  double valor = 1;
+}
+
+// Todas as chamadas devolvem o estado atualizado da fonte.
+message RespostaControle {
+  bool sucesso = 1;
+  string mensagem = 2;
+  EstadoFonte estado = 3;
+}
+
+service ControleFonte {
+  // Consulta o estado operacional atual (também usado como "heartbeat").
+  rpc ObterEstado (Vazio) returns (RespostaControle);
+
+  // Liga (true) ou desliga (false) a fonte.
+  rpc DefinirLigado (ValorBool) returns (RespostaControle);
+
+  // Altera a frequência de envio das leituras (em segundos).
+  rpc DefinirIntervalo (ValorInt) returns (RespostaControle);
+
+  // Altera o limiar de alerta (sensor de ar, em ppm de CO2).
+  rpc DefinirLimiar (ValorDouble) returns (RespostaControle);
+
+  // Altera a intensidade da luz (poste, 0-100 %).
+  rpc DefinirIntensidade (ValorInt) returns (RespostaControle);
+
+  // Altera o tempo de ciclo do semáforo (em segundos).
+  rpc DefinirTempoCiclo (ValorInt) returns (RespostaControle);
+
+  // Ativa (true) ou remove (false) uma falha simulada: a fonte para de enviar dados.
+  rpc SimularFalha (ValorBool) returns (RespostaControle);
+}

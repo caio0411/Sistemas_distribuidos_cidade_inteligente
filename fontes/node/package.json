@@ -1,0 +1,12 @@
+{
+  "name": "fontes-node",
+  "version": "1.0.0",
+  "description": "Fontes de dados não controláveis (Node.js) do sistema Cidade Inteligente",
+  "scripts": {
+    "estacao": "node estacao.js",
+    "trafego": "node contador_trafego.js"
+  },
+  "dependencies": {
+    "protobufjs": "^7.4.0"
+  }
+}

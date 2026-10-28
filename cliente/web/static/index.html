@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cidade Inteligente — Dashboard</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <style>
+    :root { --bg:#f4f6f8; --card:#fff; --texto:#1d2733; --suave:#6b7785; --borda:#dde3ea; --azul:#2563eb; }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family: system-ui, Segoe UI, sans-serif; background:var(--bg); color:var(--texto); }
+    header { background:#1e293b; color:#fff; padding:14px 24px; display:flex; justify-content:space-between; align-items:center; }
+    header h1 { margin:0; font-size:20px; }
+    #conexao { font-size:13px; opacity:.85; }
+    main { padding:20px 24px; display:grid; gap:20px; max-width:1400px; margin:0 auto; }
+    .card { background:var(--card); border:1px solid var(--borda); border-radius:10px; padding:16px; }
+    .card h2 { margin:0 0 12px; font-size:16px; }
+    table { width:100%; border-collapse:collapse; font-size:14px; }
+    th, td { text-align:left; padding:8px; border-bottom:1px solid var(--borda); vertical-align:middle; }
+    th { color:var(--suave); font-weight:600; font-size:12px; text-transform:uppercase; }
+    .badge { padding:3px 8px; border-radius:999px; font-size:12px; font-weight:600; color:#fff; }
+    .ONLINE { background:#16a34a; } .DESLIGADA { background:#64748b; } .FALHA { background:#d97706; } .OFFLINE { background:#dc2626; }
+    .acoes { display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
+    button { border:1px solid var(--borda); background:#fff; border-radius:6px; padding:5px 10px; cursor:pointer; font-size:13px; }
+    button:hover { border-color:var(--azul); color:var(--azul); }
+    button.primario { background:var(--azul); color:#fff; border-color:var(--azul); }
+    input[type=number] { width:70px; padding:4px; border:1px solid var(--borda); border-radius:6px; }
+    select { padding:6px; border:1px solid var(--borda); border-radius:6px; }
+    .graficos { display:grid; grid-template-columns:repeat(auto-fit, minmax(380px, 1fr)); gap:20px; }
+    .grafico { height:260px; }
+    .suave { color:var(--suave); font-size:13px; }
+    #log { font-family: Consolas, monospace; font-size:13px; max-height:140px; overflow:auto; }
+    #log div.erro { color:#dc2626; }
+  </style>
+</head>
+<body>
+<header>
+  <h1>🏙️ Cidade Inteligente — Dashboard</h1>
+  <span id="conexao">conectando…</span>
+</header>
+<main>
+  <section class="card">
+    <h2>Fontes de dados</h2>
+    <table>
+      <thead><tr><th>Status</th><th>Fonte</th><th>Tipo</th><th>Estado</th><th>Última leitura</th><th>Comandos (gRPC)</th></tr></thead>
+      <tbody id="fontes"></tbody>
+    </table>
+  </section>
+
+  <section class="graficos">
+    <div class="card"><h2>Temperatura (°C)</h2><div class="grafico"><canvas id="g-temperatura"></canvas></div></div>
+    <div class="card"><h2>CO₂ (ppm) <span class="suave">— pontos vermelhos = alertas</span></h2><div class="grafico"><canvas id="g-co2"></canvas></div></div>
+    <div class="card"><h2>Consumo dos postes (W)</h2><div class="grafico"><canvas id="g-consumo"></canvas></div></div>
+    <div class="card"><h2>Ruído (dB) <span class="suave">— pontos vermelhos = alertas</span></h2><div class="grafico"><canvas id="g-ruido"></canvas></div></div>
+    <div class="card"><h2>Fluxo de veículos (veíc/min)</h2><div class="grafico"><canvas id="g-veiculos"></canvas></div></div>
+    <div class="card"><h2>Fila nos semáforos (veículos)</h2><div class="grafico"><canvas id="g-fila"></canvas></div></div>
+  </section>
+
+  <section class="card">
+    <h2>Consultas agregadas</h2>
+    <div class="acoes">
+      <select id="consulta"></select>
+      <button class="primario" onclick="executarConsulta()">Executar</button>
+    </div>
+    <div id="resultado" style="margin-top:12px"></div>
+  </section>
+
+  <section class="card">
+    <h2>Log de comandos</h2>
+    <div id="log" class="suave"></div>
+  </section>
+</main>
+
+<script>
+const NOMES = {
+  POSTE_ILUMINACAO: "Poste de iluminação", SENSOR_AR: "Sensor de qualidade do ar", ESTACAO_METEOROLOGICA: "Estação meteorológica",
+  SEMAFORO: "Semáforo", CONTADOR_TRAFEGO: "Contador de tráfego", SENSOR_RUIDO: "Sensor de ruído",
+};
+const CONSULTAS = [
+  ["Média de temperatura na última hora", "MEDIA", "temperatura", 60],
+  ["Desvio padrão de CO2 nas últimas 24 h", "DESVIO_PADRAO", "co2", 1440],
+  ["Fonte com maior variação de temperatura (1 h)", "MAIOR_VARIACAO", "temperatura", 60],
+  ["Alertas (CO2 e ruído) por fonte (24 h)", "CONTAGEM_ALERTAS", "", 1440],
+  ["Pico de consumo dos postes (24 h)", "PICO", "consumo", 1440],
+  ["Pico de ruído (24 h)", "PICO", "ruido", 1440],
+  ["Média do fluxo de veículos na última hora", "MEDIA", "veiculos", 60],
+  ["Média da fila nos semáforos na última hora", "MEDIA", "fila", 60],
+  ["Média de umidade na última hora", "MEDIA", "umidade", 60],
+];
+const CORES = ["#2563eb", "#16a34a", "#d97706", "#9333ea", "#0891b2", "#db2777"];
+
+document.getElementById("consulta").innerHTML = CONSULTAS.map((c, i) => `<option value="${i}">${c[0]}</option>`).join("");
+
+// ---------- utilidades ----------
+async function api(url, opcoes) {
+  const r = await fetch(url, opcoes);
+  const dados = await r.json();
+  if (!r.ok) throw new Error(dados.erro || r.statusText);
+  return dados;
+}
+function registrar(texto, erro = false) {
+  const log = document.getElementById("log");
+  log.insertAdjacentHTML("afterbegin", `<div class="${erro ? "erro" : ""}">${new Date().toLocaleTimeString("pt-BR")} — ${texto}</div>`);
+}
+const hora = (ts) => new Date(ts).toLocaleTimeString("pt-BR");
+
+// ---------- fontes e comandos ----------
+async function comando(fonte_id, acao, valor = 0) {
+  try {
+    const r = await api("/api/comando", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ fonte_id, acao, valor }) });
+    registrar(`${fonte_id}: ${r.mensagem}`, !r.sucesso);
+  } catch (e) { registrar(e.message, true); }
+  atualizarFontes();
+}
+function comandoComValor(fonte_id, acao, inputId) {
+  comando(fonte_id, acao, document.getElementById(inputId).value);
+}
+
+function htmlAcoes(f) {
+  if (!f.controlavel) return '<span class="suave">não controlável</span>';
+  const e = f.estado, id = f.id;
+  let html = e.ligado
+    ? `<button onclick="comando('${id}','DESLIGAR')">Desligar</button>`
+    : `<button onclick="comando('${id}','LIGAR')">Ligar</button>`;
+  html += `<span>Intervalo <input type="number" id="int-${id}" value="${e.intervalo_envio_s}" min="1"> <button onclick="comandoComValor('${id}','DEFINIR_INTERVALO','int-${id}')">ok</button></span>`;
+  if (f.tipo === "POSTE_ILUMINACAO")
+    html += `<span>Intensidade <input type="number" id="intens-${id}" value="${e.intensidade}" min="0" max="100"> <button onclick="comandoComValor('${id}','DEFINIR_INTENSIDADE','intens-${id}')">ok</button></span>`;
+  if (f.tipo === "SENSOR_AR")
+    html += `<span>Limiar <input type="number" id="lim-${id}" value="${e.limiar_alerta}" step="50"> <button onclick="comandoComValor('${id}','DEFINIR_LIMIAR','lim-${id}')">ok</button></span>`;
+  if (f.tipo === "SEMAFORO")
+    html += `<span>Ciclo <input type="number" id="ciclo-${id}" value="${e.tempo_ciclo_s}" min="10" max="300"> <button onclick="comandoComValor('${id}','DEFINIR_TEMPO_CICLO','ciclo-${id}')">ok</button></span>`;
+  html += e.em_falha
+    ? `<button onclick="comando('${id}','RECUPERAR_FALHA')">Recuperar falha</button>`
+    : `<button onclick="comando('${id}','SIMULAR_FALHA')">Simular falha</button>`;
+  return `<div class="acoes">${html}</div>`;
+}
+
+function htmlEstado(f) {
+  const e = f.estado, partes = [`intervalo ${e.intervalo_envio_s}s`];
+  if (f.tipo === "POSTE_ILUMINACAO") partes.push(`intensidade ${e.intensidade}%`);
+  if (f.tipo === "SENSOR_AR") partes.push(`limiar ${e.limiar_alerta} ppm`);
+  if (f.tipo === "SEMAFORO") partes.push(`ciclo ${e.tempo_ciclo_s}s`);
+  return partes.join(" · ");
+}
+
+let editando = false; // não redesenha a tabela enquanto o usuário digita
+document.addEventListener("focusin", (ev) => { editando = ev.target.tagName === "INPUT"; });
+document.addEventListener("focusout", () => { editando = false; });
+
+async function atualizarFontes() {
+  try {
+    const fontes = await api("/api/fontes");
+    document.getElementById("conexao").textContent = `Gateway conectado · ${fontes.length} fonte(s)`;
+    if (editando) return;
+    document.getElementById("fontes").innerHTML = fontes.map((f) => `
+      <tr>
+        <td><span class="badge ${f.status}">${f.status}</span></td>
+        <td><b>${f.id}</b><br><span class="suave">${f.ip}${f.controlavel ? ":" + f.porta_grpc : ""}</span></td>
+        <td>${NOMES[f.tipo] || f.tipo}</td>
+        <td class="suave">${htmlEstado(f)}</td>
+        <td>${f.medidas.map((m) => `${m.grandeza}: <b>${m.valor.toFixed(1)}</b> ${m.unidade}`).join("<br>") || "-"}
+            ${f.ultima_leitura_ms ? `<br><span class="suave">${hora(f.ultima_leitura_ms)}</span>` : ""}</td>
+        <td>${htmlAcoes(f)}</td>
+      </tr>`).join("") || '<tr><td colspan="6" class="suave">Nenhuma fonte descoberta ainda.</td></tr>';
+  } catch (e) {
+    document.getElementById("conexao").textContent = "⚠ " + e.message;
+  }
+}
+
+// ---------- gráficos (séries temporais) ----------
+const graficos = {};
+function criarGrafico(grandeza) {
+  graficos[grandeza] = new Chart(document.getElementById(`g-${grandeza}`), {
+    type: "line",
+    data: { datasets: [] },
+    options: {
+      animation: false, maintainAspectRatio: false, parsing: false,
+      scales: { x: { type: "linear", ticks: { callback: hora, maxTicksLimit: 6 } } },
+      plugins: { tooltip: { callbacks: { title: (itens) => hora(itens[0].parsed.x) } } },
+    },
+  });
+}
+const GRANDEZAS = ["temperatura", "co2", "consumo", "ruido", "veiculos", "fila"];
+GRANDEZAS.forEach(criarGrafico);
+
+async function atualizarGrafico(grandeza) {
+  try {
+    const pontos = await api(`/api/historico?grandeza=${grandeza}&janela=15&limite=1000`);
+    const porFonte = {};
+    pontos.forEach((p) => (porFonte[p.fonte_id] ||= []).push(p));
+    graficos[grandeza].data.datasets = Object.keys(porFonte).sort().map((fonte, i) => ({
+      label: fonte,
+      data: porFonte[fonte].map((p) => ({ x: p.ts, y: p.valor })),
+      borderColor: CORES[i % CORES.length],
+      pointRadius: porFonte[fonte].map((p) => (p.evento ? 6 : 1.5)),
+      pointBackgroundColor: porFonte[fonte].map((p) => (p.evento ? "#dc2626" : CORES[i % CORES.length])),
+      tension: 0.25,
+    }));
+    graficos[grandeza].update();
+  } catch (e) { /* o status de conexão já mostra o erro */ }
+}
+
+// ---------- consultas agregadas ----------
+async function executarConsulta() {
+  const [, tipo, grandeza, janela] = CONSULTAS[document.getElementById("consulta").value];
+  const div = document.getElementById("resultado");
+  try {
+    const r = await api(`/api/consulta?tipo=${tipo}&grandeza=${grandeza}&janela=${janela}`);
+    div.innerHTML = `<p><b>${r.descricao}</b></p>` + (r.itens.length
+      ? `<table><thead><tr><th>Fonte</th><th>Valor</th><th>Amostras</th></tr></thead><tbody>` +
+        r.itens.map((i) => `<tr><td>${i.rotulo}</td><td><b>${i.valor.toFixed(2)}</b> ${r.unidade}</td><td>${i.amostras}</td></tr>`).join("") +
+        `</tbody></table>`
+      : '<p class="suave">Sem dados.</p>');
+  } catch (e) { div.innerHTML = `<p style="color:#dc2626">${e.message}</p>`; }
+}
+
+// ---------- atualização periódica ----------
+function atualizarTudo() {
+  atualizarFontes();
+  GRANDEZAS.forEach(atualizarGrafico);
+}
+atualizarTudo();
+setInterval(atualizarTudo, 3000);
+</script>
+</body>
+</html>
