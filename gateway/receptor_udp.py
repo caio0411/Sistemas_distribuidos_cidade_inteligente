@@ -1,4 +1,4 @@
-"""Recebe o fluxo contínuo de leituras (Leitura) das fontes via UDP."""
+# Recebe as leituras (Leitura) enviadas pelas fontes via UDP.
 import logging
 import socket
 import threading

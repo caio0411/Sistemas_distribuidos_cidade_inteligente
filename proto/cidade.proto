@@ -1,13 +1,9 @@
-// Mensagens do sistema "Cidade Inteligente".
-// Usadas em todas as comunicações: multicast (descoberta), UDP (leituras),
-// TCP (Cliente <-> Gateway) e como tipos do serviço gRPC (controle.proto).
+// Mensagens Protobuf usadas em todas as comunicações do sistema.
 syntax = "proto3";
 
 package cidade;
 
-// ---------------------------------------------------------------------------
-// Tipos básicos
-// ---------------------------------------------------------------------------
+// ===== Tipos básicos =====
 
 enum TipoFonte {
   TIPO_DESCONHECIDO = 0;
@@ -44,9 +40,7 @@ message Medida {
   string unidade = 3;
 }
 
-// ---------------------------------------------------------------------------
-// Descoberta (UDP multicast)
-// ---------------------------------------------------------------------------
+// ===== Descoberta (UDP multicast) =====
 
 // Gateway -> grupo multicast: "fontes, identifiquem-se".
 message RequisicaoDescoberta {
@@ -66,9 +60,7 @@ message AnuncioFonte {
   EstadoFonte estado_inicial = 7;
 }
 
-// ---------------------------------------------------------------------------
-// Fluxo de dados (UDP)
-// ---------------------------------------------------------------------------
+// ===== Fluxo de dados (UDP) =====
 
 message Leitura {
   string fonte_id = 1;
@@ -78,9 +70,7 @@ message Leitura {
   bool evento = 5; // true = envio imediato por ultrapassagem de limiar
 }
 
-// ---------------------------------------------------------------------------
-// Cliente <-> Gateway (TCP)
-// ---------------------------------------------------------------------------
+// ===== Cliente <-> Gateway (TCP) =====
 
 enum AcaoComando {
   ACAO_DESCONHECIDA = 0;

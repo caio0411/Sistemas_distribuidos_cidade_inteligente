@@ -1,11 +1,4 @@
-"""Sensor de qualidade do ar (fonte CONTROLÁVEL que gera EVENTOS).
-
-- Comandos via gRPC: limiar de alerta (ppm), intervalo de envio, ligar/desligar, simular falha.
-- Envia via UDP a concentração de CO2 (ppm) periodicamente e, IMEDIATAMENTE,
-  quando o valor ultrapassa o limiar de alerta.
-
-Uso: python -m fontes.python.sensor_ar --id ar-01 --porta-grpc 40201
-"""
+# Sensor de qualidade do ar (controlável): envia CO2 e gera evento ao cruzar o limiar.
 import argparse
 import random
 

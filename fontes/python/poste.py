@@ -1,10 +1,4 @@
-"""Poste de iluminação inteligente (fonte CONTROLÁVEL).
-
-- Comandos via gRPC: ligar/desligar, intensidade (0-100 %), intervalo de envio, simular falha.
-- Envia via UDP o consumo de energia (W), proporcional à intensidade.
-
-Uso: python -m fontes.python.poste --id poste-01 --porta-grpc 40101
-"""
+# Poste de iluminação (controlável): envia consumo; comandos de liga/desliga e intensidade.
 import argparse
 import random
 

@@ -1,7 +1,4 @@
-// Estação meteorológica (fonte NÃO CONTROLÁVEL) — Node.js.
-// Envia periodicamente temperatura (°C) e umidade (%) ao Gateway via UDP.
-//
-// Uso: node estacao.js --id estacao-01 --intervalo 5
+// Estação meteorológica (não controlável): envia temperatura e umidade.
 
 const { iniciarFonte, argumento } = require("./fonte_base");
 

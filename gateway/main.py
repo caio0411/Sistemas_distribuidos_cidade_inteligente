@@ -1,7 +1,4 @@
-"""Gateway central do sistema Cidade Inteligente.
-
-Uso: python -m gateway.main
-"""
+# Gateway: inicia descoberta, receptor UDP, monitor gRPC e servidor TCP.
 import logging
 
 from gateway.banco import Banco

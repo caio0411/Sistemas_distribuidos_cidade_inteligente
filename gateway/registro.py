@@ -1,4 +1,4 @@
-"""Registro (em memória) das fontes descobertas e do seu estado."""
+# Registro em memória das fontes descobertas e do seu estado.
 import logging
 import threading
 import time

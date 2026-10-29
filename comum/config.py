@@ -1,8 +1,4 @@
-"""Endereços e portas usados por todos os processos.
-
-Para rodar em várias máquinas, defina a variável de ambiente SD_HOST com o IP
-da máquina (ex.: set SD_HOST=192.168.0.10).
-"""
+# Endereços e portas de todos os processos (SD_HOST = IP anunciado pela máquina).
 import os
 
 # IP que cada processo anuncia para os outros

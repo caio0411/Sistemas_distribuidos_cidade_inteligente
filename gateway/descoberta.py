@@ -1,9 +1,4 @@
-"""Descoberta de fontes via UDP multicast.
-
-1. O Gateway envia uma RequisicaoDescoberta ao grupo multicast ao iniciar
-   (e repete a cada INTERVALO_DESCOBERTA_S, para achar fontes que subirem depois).
-2. As fontes respondem com um AnuncioFonte (unicast) para a porta de descoberta.
-"""
+# Descoberta via UDP multicast: envia RequisicaoDescoberta e recebe AnuncioFonte.
 import logging
 import socket
 import threading

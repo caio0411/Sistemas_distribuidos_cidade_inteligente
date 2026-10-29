@@ -1,7 +1,5 @@
 @echo off
 REM Abre cada processo do sistema em uma janela separada.
-REM Ordem: Gateway -> fontes -> clientes (qualquer ordem funciona, pois a
-REM descoberta multicast e repetida a cada 10 s).
 cd /d %~dp0..
 
 REM Gera o codigo Python a partir dos .proto (garante que esta atualizado)

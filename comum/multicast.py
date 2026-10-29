@@ -1,4 +1,4 @@
-"""Funções auxiliares para sockets UDP multicast."""
+# Sockets UDP multicast (descoberta).
 import socket
 import struct
 

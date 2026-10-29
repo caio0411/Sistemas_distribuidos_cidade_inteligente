@@ -1,5 +1,4 @@
-// Serviço gRPC exposto pelas fontes controláveis (poste e sensor de ar).
-// O Gateway é o cliente gRPC; cada fonte controlável é um servidor gRPC.
+// Serviço gRPC das fontes controláveis (fonte = servidor, Gateway = cliente).
 syntax = "proto3";
 
 package cidade;

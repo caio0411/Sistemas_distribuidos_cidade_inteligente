@@ -1,7 +1,4 @@
-"""Persistência das leituras em SQLite (pontuação extra).
-
-Cada Medida de uma Leitura vira uma linha na tabela `leituras`.
-"""
+# Persistência das leituras em SQLite.
 import os
 import sqlite3
 import threading

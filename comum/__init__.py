@@ -1,5 +1,4 @@
-# Coloca a pasta "gerado" (código gerado pelo protoc) no sys.path,
-# para que "import cidade_pb2" funcione em qualquer módulo do projeto.
+# Adiciona a pasta "gerado" (código do protoc) ao sys.path.
 import os
 import sys
 

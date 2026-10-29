@@ -1,7 +1,4 @@
-"""Cliente de linha de comando.
-
-Uso: python -m cliente.cli
-"""
+# Cliente de linha de comando.
 from datetime import datetime
 
 from cliente.conexao import ClienteGateway

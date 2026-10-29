@@ -1,11 +1,4 @@
-"""Gateway como CLIENTE gRPC das fontes controláveis.
-
-- `executar_comando`: traduz um ComandoFonte (vindo do Cliente via TCP) em uma
-  chamada gRPC ao serviço ControleFonte da fonte.
-- `_loop_monitor`: verifica periodicamente se cada fonte está viva:
-    * controláveis: chamada gRPC ObterEstado (heartbeat);
-    * não controláveis: tempo desde a última leitura UDP.
-"""
+# Cliente gRPC das fontes: executa comandos e monitora se cada fonte está viva.
 import logging
 import threading
 import time
@@ -48,6 +41,7 @@ class ControleGRPC:
 
         stub = self._stub(info)
         t = config.TIMEOUT_GRPC_S
+        # Traduz o comando recebido do cliente (TCP) na chamada gRPC correspondente
         chamadas = {
             pb.LIGAR: lambda: stub.DefinirLigado(ctrl.ValorBool(valor=True), timeout=t),
             pb.DESLIGAR: lambda: stub.DefinirLigado(ctrl.ValorBool(valor=False), timeout=t),
@@ -55,7 +49,7 @@ class ControleGRPC:
             pb.DEFINIR_LIMIAR: lambda: stub.DefinirLimiar(ctrl.ValorDouble(valor=comando.valor), timeout=t),
             pb.DEFINIR_INTENSIDADE: lambda: stub.DefinirIntensidade(ctrl.ValorInt(valor=int(comando.valor)), timeout=t),
             pb.DEFINIR_TEMPO_CICLO: lambda: stub.DefinirTempoCiclo(ctrl.ValorInt(valor=int(comando.valor)), timeout=t),
-            pb.SIMULAR_FALHA: lambda:stub.SimularFalha(ctrl.ValorBool(valor=True), timeout=t),
+            pb.SIMULAR_FALHA: lambda: stub.SimularFalha(ctrl.ValorBool(valor=True), timeout=t),
             pb.RECUPERAR_FALHA: lambda: stub.SimularFalha(ctrl.ValorBool(valor=False), timeout=t),
         }
         if comando.acao not in chamadas:
@@ -72,6 +66,7 @@ class ControleGRPC:
         self.registro.atualizar_estado(comando.fonte_id, estado=resposta.estado, status=self._status_de(resposta.estado))
         return pb.ResultadoComando(sucesso=resposta.sucesso, mensagem=resposta.mensagem, estado=resposta.estado)
 
+    # Detecção de falhas: controláveis via heartbeat gRPC; contínuas pelo tempo sem leitura
     def _verificar(self, info):
         if info.controlavel:
             try:

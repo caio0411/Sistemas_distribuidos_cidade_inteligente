@@ -1,4 +1,4 @@
-"""Consultas analíticas agregadas sobre as leituras persistidas."""
+# Consultas agregadas e histórico sobre as leituras salvas.
 import statistics
 from collections import defaultdict
 

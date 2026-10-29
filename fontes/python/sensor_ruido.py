@@ -1,11 +1,4 @@
-"""Sensor de ruído urbano (fonte NÃO CONTROLÁVEL que gera EVENTOS).
-
-- Não tem servidor gRPC: só participa da descoberta e envia dados.
-- Envia via UDP o nível sonoro (dB) periodicamente e, IMEDIATAMENTE,
-  quando o ruído ultrapassa um limite fixo (ex.: buzina, obra, show).
-
-Uso: python -m fontes.python.sensor_ruido --id ruido-01 --limite 80
-"""
+# Sensor de ruído (não controlável): envia dB e gera evento acima do limite.
 import argparse
 import random
 

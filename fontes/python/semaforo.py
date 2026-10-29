@@ -1,11 +1,4 @@
-"""Semáforo inteligente (fonte CONTROLÁVEL).
-
-- Comandos via gRPC: tempo de ciclo (s), ligar/desligar, intervalo de envio, simular falha.
-- Envia via UDP o tamanho da fila de veículos parados e o tempo de ciclo atual.
-  Metade do ciclo é verde e metade vermelho: ciclos longos formam filas maiores.
-
-Uso: python -m fontes.python.semaforo --id semaforo-01 --porta-grpc 40301
-"""
+# Semáforo (controlável): envia a fila de veículos; comando de tempo de ciclo.
 import argparse
 import random
 

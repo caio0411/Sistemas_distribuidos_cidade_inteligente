@@ -1,9 +1,4 @@
-// Comportamento comum às fontes NÃO CONTROLÁVEIS em Node.js.
-//
-// - Participa da descoberta via UDP multicast (responde com AnuncioFonte).
-// - Depois de descoberta, envia periodicamente uma Leitura ao Gateway via UDP.
-// - As mensagens são as mesmas do Python: o arquivo proto/cidade.proto é
-//   carregado em tempo de execução com a biblioteca protobufjs.
+// Base das fontes Node.js: descoberta multicast e envio periódico de leituras via UDP.
 
 const dgram = require("dgram");
 const path = require("path");

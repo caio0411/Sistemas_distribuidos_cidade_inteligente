@@ -1,4 +1,4 @@
-"""Conexão TCP com o Gateway, usada pelo cliente CLI e pelo cliente Web."""
+# Conexão TCP com o Gateway (usada pelo cliente CLI e pelo Web).
 import socket
 import threading
 

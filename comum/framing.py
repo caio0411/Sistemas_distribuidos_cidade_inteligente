@@ -1,10 +1,4 @@
-"""Envio/recebimento de mensagens Protobuf sobre TCP.
-
-TCP é um fluxo de bytes (não tem "mensagens"), então cada mensagem é enviada
-com um cabeçalho de 4 bytes (big-endian) indicando o seu tamanho:
-
-    [ tamanho (4 bytes) ][ bytes da mensagem protobuf ]
-"""
+# Framing TCP: cada mensagem Protobuf vai precedida de 4 bytes com o seu tamanho.
 import struct
 
 

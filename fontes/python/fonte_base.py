@@ -1,12 +1,4 @@
-"""Comportamento comum a todas as fontes de dados em Python.
-
-Cada fonte:
-  1. Escuta o grupo multicast e responde à descoberta do Gateway (AnuncioFonte).
-  2. Depois de descoberta, envia leituras (Leitura) ao Gateway via UDP:
-     - periodicamente (a cada `intervalo_envio_s` segundos);
-     - imediatamente, se `verificar_evento` detectar um evento relevante.
-  3. Se for controlável, sobe um servidor gRPC (serviço ControleFonte).
-"""
+# Base das fontes Python: descoberta multicast, envio UDP de leituras e servidor gRPC.
 import logging
 import socket
 import threading

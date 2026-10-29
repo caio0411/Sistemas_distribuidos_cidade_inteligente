@@ -1,8 +1,4 @@
-"""Servidor TCP que atende os Clientes (CLI e Web).
-
-Cada conexão é atendida por uma thread. O cliente envia RequisicaoCliente e
-recebe RespostaCliente, ambas em Protobuf com prefixo de tamanho (ver comum/framing.py).
-"""
+# Servidor TCP que atende os clientes (RequisicaoCliente -> RespostaCliente).
 import logging
 import socketserver
 

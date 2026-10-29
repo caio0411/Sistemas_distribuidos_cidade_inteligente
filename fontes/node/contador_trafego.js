@@ -1,7 +1,4 @@
-// Contador de tráfego (fonte NÃO CONTROLÁVEL) — Node.js.
-// Envia periodicamente o fluxo de veículos por minuto ao Gateway via UDP.
-//
-// Uso: node contador_trafego.js --id trafego-01 --intervalo 5
+// Contador de tráfego (não controlável): envia veículos por minuto.
 
 const { iniciarFonte, argumento } = require("./fonte_base");
 

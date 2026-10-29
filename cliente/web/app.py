@@ -1,13 +1,4 @@
-"""Cliente Web (dashboard) — pontuação extra.
-
-O navegador não consegue abrir sockets TCP diretamente, então este servidor
-Flask funciona como uma "ponte": ele é um Cliente TCP do Gateway (mesmo
-protocolo Protobuf do cliente CLI) e expõe uma API HTTP/JSON para a página.
-
-    Navegador --HTTP/JSON--> Flask (app.py) --TCP/Protobuf--> Gateway
-
-Uso: python -m cliente.web.app   (abre em http://localhost:8080)
-"""
+# Dashboard web: ponte HTTP/JSON (Flask) para o Gateway via TCP.
 from flask import Flask, jsonify, request
 
 from cliente.conexao import ClienteGateway
