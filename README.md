@@ -27,8 +27,8 @@ consultas analíticas agregadas.
 | Descoberta Gateway -> fontes | UDP multicast `224.1.1.1:40000` | `RequisicaoDescoberta` |
 | Resposta fonte -> Gateway | UDP unicast `:40003` | `AnuncioFonte` (tipo, IP, porta gRPC, estado inicial) |
 | Leituras fonte -> Gateway | UDP `:40001` | `Leitura` (lista de `Medida` + flag `evento`) |
-| Comandos Gateway -> fonte | gRPC (serviço `ControleFonte`) | `ValorBool` / `ValorInt` / `ValorDouble` → `RespostaControle` |
-| Cliente <-> Gateway | TCP `:40002` (4 bytes de tamanho + mensagem) | `RequisicaoCliente` → `RespostaCliente` |
+| Comandos Gateway -> fonte | gRPC (serviço `ControleFonte`) | `ValorBool` / `ValorInt` / `ValorDouble` -> `RespostaControle` |
+| Cliente <-> Gateway | TCP `:40002` (4 bytes de tamanho + mensagem) | `RequisicaoCliente` -> `RespostaCliente` |
 
 As mensagens estão definidas em [`proto/cidade.proto`](proto/cidade.proto) e o serviço gRPC em
 [`proto/controle.proto`](proto/controle.proto).
